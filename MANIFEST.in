@@ -1,0 +1,2 @@
+recursive-include custom_ui_tutorial_app/static *
+recursive-include custom_ui_tutorial_app/templates *
