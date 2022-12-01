@@ -31,7 +31,7 @@ class GaussianEigenvaluesViewProvider:
         ZENODO_SECRET=os.environ['ZENODO_SECRET']
 
         scope = ['deposit:write', 'deposit:actions']
-        oauth = OAuth2Session(ZENODO_CLIENT_ID, redirect_uri=request.build_absolute_uri(), scope=scope) # TODO: Replace with actual URL
+        oauth = OAuth2Session(ZENODO_CLIENT_ID, redirect_uri="http://localhost", scope=scope) # TODO: Replace with actual URL
 
         if (not len(auth_url)):
 
@@ -39,7 +39,7 @@ class GaussianEigenvaluesViewProvider:
 
             return {
                 'url': authorization_url,
-                'label': 'To access/upload your data on Zenono, go to this URL and paste the authorization URL in the text box below',
+                'label': 'To access/upload your data on Zenodo, go to this URL and paste the authorization URL in the text box below',
                 'interactive': [
                     {'name': 'auth_url', 'value': auth_url}
                 ]
@@ -96,7 +96,6 @@ class GaussianEigenvaluesViewProvider:
                 'https://zenodo.org/oauth/token',
                 authorization_response=auth_url,
                 client_secret=ZENODO_SECRET,
-                grant_type='client_credentials',
                 scope=scope
                 )
 
