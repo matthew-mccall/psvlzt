@@ -6,13 +6,13 @@ import os
 import hashlib
 import json
 
-import requests
-
 import numpy as np
 from cclib.parser import ccopen
 from django.conf import settings
 from matplotlib.figure import Figure
 
+from dotenv import load_dotenv
+from requests_oauthlib import OAuth2Session
 
 class GaussianEigenvaluesViewProvider:
     display_type = "link"
@@ -23,7 +23,27 @@ class GaussianEigenvaluesViewProvider:
     immediate = False
     name = "Gaussian Eigenvalues Upload Output"
 
-    def generate_data(self, request, experiment_output, experiment, output_file=None, **kwargs):
+    def generate_data(self, request, experiment_output, experiment, output_file=None, auth_url="", **kwargs):
+
+        load_dotenv()
+
+        ZENODO_CLIENT_ID=os.environ['ZENODO_CLIENT_ID']
+        ZENODO_SECRET=os.environ['ZENODO_SECRET']
+
+        scope = ['deposit:write', 'deposit:actions']
+        oauth = OAuth2Session(ZENODO_CLIENT_ID, redirect_uri=request.build_absolute_uri(), scope=scope) # TODO: Replace with actual URL
+
+        if (not len(auth_url)):
+
+            authorization_url, state = oauth.authorization_url('https://zenodo.org/oauth/authorize')
+
+            return {
+                'url': authorization_url,
+                'label': 'To access/upload your data on Zenono, go to this URL and paste the authorization URL in the text box below',
+                'interactive': [
+                    {'name': 'auth_url', 'value': auth_url}
+                ]
+            }
 
         output_text = io.TextIOWrapper(output_file)
         gaussian = ccopen(output_text)
@@ -72,19 +92,23 @@ class GaussianEigenvaluesViewProvider:
         filename = "gaussian_output-{}.png".format(m.hexdigest())
         upload_name = "gateway_{}".format(m.hexdigest())
 
-        ZENODO_PAT = "<insert your access token here>"
+        token = oauth.fetch_token(
+                'https://zenodo.org/oauth/token',
+                authorization_response=auth_url,
+                client_secret=ZENODO_SECRET,
+                grant_type='client_credentials',
+                scope=scope
+                )
 
-        res = requests.get('https://zenodo.org/api/deposit/depositions',
-                           params={'q': upload_name,
-                                   'access_token': ZENODO_PAT})
+        res = oauth.get('https://zenodo.org/api/deposit/depositions',
+                           params={'q': upload_name})
 
         if len(res.json()):
             depID = res.json()[0]['id']
             fileLink = res.json()[0]['links']['files']
             htmlLink = res.json()[0]['links']['html']
 
-            res = requests.get(fileLink,
-                               params={'access_token': ZENODO_PAT})
+            res = oauth.get(fileLink)
 
             return {
                 'url': htmlLink,
@@ -92,12 +116,10 @@ class GaussianEigenvaluesViewProvider:
             }
 
         headers = {"Content-Type": "application/json"}
-        params = {'access_token': ZENODO_PAT}
 
         print("new upload!")
 
-        res = requests.post('https://zenodo.org/api/deposit/depositions',
-                            params=params,
+        res = oauth.post('https://zenodo.org/api/deposit/depositions',
                             json={
                                 "metadata": {
                                     "upload_type": "image",
@@ -120,10 +142,9 @@ class GaussianEigenvaluesViewProvider:
 
         bucket_url = res.json()["links"]["bucket"]
 
-        res = requests.put(
+        res = oauth.put(
             "%s/%s" % (bucket_url, filename),
             data=image_bytes,
-            params=params,
         )
 
         return {
