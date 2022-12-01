@@ -13,4 +13,5 @@
    ```
 
 3. Start (or restart) the Django Portal server.
-4. Insert your Zenodo Personal Access Token in `custom_ui_tutorial_app/output_views/gaussian_eigenvalues_view.py`
+4. Create an Application on Zenodo.
+5. Set `ZENODO_CLIENT_ID` and `ZENODO_SECRET` environment variables. (`.env` is also supported)
