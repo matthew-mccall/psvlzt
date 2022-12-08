@@ -6,7 +6,7 @@
 <div class="main-content-wrapper">
     <main class="main-content">
         <div class="container-fluid">
-            <h1>Welcome to {{ project_name }}</h1>
+            <h1>Please wait to be redirected</h1>
         </div>
     </main>
 </div>
@@ -17,6 +17,17 @@
 <script src="{% static 'django_airavata_api/dist/airavata-api.js' %}"></script>
 <script>
     const { models, services, session, utils } = AiravataAPI;
+
+    const currentURI = window.location.href
+
+    const params = new Proxy(new URLSearchParams(window.location.search), {
+            get: (searchParams, prop) => searchParams.get(prop),
+        });
+
+    console.log(`redirect uri: ${params.state}`)
+    console.log(`original uri: ${currentURI}`)
+
+    window.location.replace(`${params.state}&oauth_redirect=${encodeURIComponent(currentURI)}&oauth_state=${encodeURIComponent(params.state)}`);
 
     // Your code here ...
     // Example code: AiravataAPI JavaScript SDK

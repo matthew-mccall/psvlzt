@@ -16,7 +16,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Uncomment and specify for production deployments
 # DEBUG = False
 # STATIC_ROOT = "/var/www/path/to/sitename/static/"
-# ALLOWED_HOSTS = ['production.hostname']
+ALLOWED_HOSTS = ['localhost', 'custom-ui-tutorial']
 
 # Django - database settings
 # MySQL - to use MySQL, uncomment and specify the settings

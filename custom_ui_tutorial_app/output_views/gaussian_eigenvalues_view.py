@@ -13,6 +13,7 @@ from matplotlib.figure import Figure
 
 from dotenv import load_dotenv
 from requests_oauthlib import OAuth2Session
+from urllib.parse import urlparse, parse_qs
 
 class GaussianEigenvaluesViewProvider:
     display_type = "link"
@@ -23,26 +24,30 @@ class GaussianEigenvaluesViewProvider:
     immediate = False
     name = "Gaussian Eigenvalues Upload Output"
 
-    def generate_data(self, request, experiment_output, experiment, output_file=None, auth_url="", **kwargs):
+    def generate_data(self, request, experiment_output, experiment, output_file=None, **kwargs):
 
         load_dotenv()
 
         ZENODO_CLIENT_ID=os.environ['ZENODO_CLIENT_ID']
         ZENODO_SECRET=os.environ['ZENODO_SECRET']
 
-        scope = ['deposit:write', 'deposit:actions']
-        oauth = OAuth2Session(ZENODO_CLIENT_ID, redirect_uri="http://localhost", scope=scope) # TODO: Replace with actual URL
+        # Temporary hack to accommodate the fact that the gateway is running on a different port than the https proxy
+        current_uri =request.build_absolute_uri()
+        state_uri = current_uri.replace("http://custom-ui-tutorial:8000", "https://localhost:4430")
 
-        if (not len(auth_url)):
+        if (request.GET.__contains__('oauth_state')):
+            state_uri = request.GET.get('oauth_state')
+
+        scope = ['deposit:write', 'deposit:actions']
+        oauth = OAuth2Session(ZENODO_CLIENT_ID, redirect_uri="https://localhost:4430/custom_ui_tutorial_app/home/", scope=scope, state=state_uri) # TODO: Replace with actual URL
+
+        if (not request.GET.__contains__('oauth_redirect')):
 
             authorization_url, state = oauth.authorization_url('https://zenodo.org/oauth/authorize')
 
             return {
                 'url': authorization_url,
-                'label': 'To access/upload your data on Zenodo, go to this URL and paste the authorization URL in the text box below',
-                'interactive': [
-                    {'name': 'auth_url', 'value': auth_url}
-                ]
+                'label': 'To access/upload your data on Zenodo, go to this URL.',
             }
 
         output_text = io.TextIOWrapper(output_file)
@@ -92,9 +97,15 @@ class GaussianEigenvaluesViewProvider:
         filename = "gaussian_output-{}.png".format(m.hexdigest())
         upload_name = "gateway_{}".format(m.hexdigest())
 
+        print("redirect uri: " + request.GET.get('oauth_redirect'))
+        oauth_redirect = urlparse(request.GET.get('oauth_redirect'))
+
+        print("state expected: " + state_uri)
+        print("state recieved: " + parse_qs(oauth_redirect.query)['state'][0])
+
         token = oauth.fetch_token(
                 'https://zenodo.org/oauth/token',
-                authorization_response=auth_url,
+                authorization_response=request.GET.get('oauth_redirect'),
                 client_secret=ZENODO_SECRET,
                 scope=scope
                 )
@@ -109,10 +120,7 @@ class GaussianEigenvaluesViewProvider:
 
             res = oauth.get(fileLink)
 
-            return {
-                'url': htmlLink,
-                'label': 'Uploaded Zenodo Ouput'
-            }
+            return "Uploaded Zenodo Output: <a href='{}'>{}</a>".format(htmlLink, upload_name)
 
         headers = {"Content-Type": "application/json"}
 
@@ -148,5 +156,5 @@ class GaussianEigenvaluesViewProvider:
 
         return {
             'url': res.json()["links"]["self"],
-            'label': 'Uploaded Zenodo Ouput'
+            'label': 'Uploaded Zenodo Output'
         }
