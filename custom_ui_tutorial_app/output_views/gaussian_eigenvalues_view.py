@@ -47,7 +47,7 @@ class GaussianEigenvaluesViewProvider:
 
             return {
                 'url': authorization_url,
-                'label': 'To access/upload your data on Zenodo, go to this URL.',
+                'label': 'To access/upload your data on Zenodo, go to this URL. After authenticating, you will be redirected back to the portal.'
             }
 
         output_text = io.TextIOWrapper(output_file)

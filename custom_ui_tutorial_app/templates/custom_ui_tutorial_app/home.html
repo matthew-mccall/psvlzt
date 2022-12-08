@@ -6,7 +6,8 @@
 <div class="main-content-wrapper">
     <main class="main-content">
         <div class="container-fluid">
-            <h1>Please wait to be redirected</h1>
+            <h1>Zenodo Upload Viewer</h1>
+            <a href="#" id="url">Click here to view uploded output on Zenodo</a>
         </div>
     </main>
 </div>
@@ -27,7 +28,15 @@
     console.log(`redirect uri: ${params.state}`)
     console.log(`original uri: ${currentURI}`)
 
-    window.location.replace(`${params.state}&oauth_redirect=${encodeURIComponent(currentURI)}&oauth_state=${encodeURIComponent(params.state)}`);
+    // window.location.replace(`${params.state}&oauth_redirect=${encodeURIComponent(currentURI)}&oauth_state=${encodeURIComponent(params.state)}`);
+
+    fetch(`${params.state}&oauth_redirect=${encodeURIComponent(currentURI)}&oauth_state=${encodeURIComponent(params.state)}`).then(response => {
+        console.log(response)
+        return response.json()
+    }).then(data => {
+        console.log(data)
+        document.getElementById("url").href = data.url
+    })
 
     // Your code here ...
     // Example code: AiravataAPI JavaScript SDK
