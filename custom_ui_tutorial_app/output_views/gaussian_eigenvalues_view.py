@@ -120,7 +120,10 @@ class GaussianEigenvaluesViewProvider:
 
             res = oauth.get(fileLink)
 
-            return "Uploaded Zenodo Output: <a href='{}'>{}</a>".format(htmlLink, upload_name)
+            return {
+                'url': htmlLink,
+                'label': 'Uploaded Zenodo Output'
+            }
 
         headers = {"Content-Type": "application/json"}
 
