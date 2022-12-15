@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from requests_oauthlib import OAuth2Session
 from urllib.parse import urlparse, parse_qs
 
+
 class GaussianEigenvaluesViewProvider:
     display_type = "link"
     # As a performance optimization, the output view provider can be invoked
@@ -28,22 +29,25 @@ class GaussianEigenvaluesViewProvider:
 
         load_dotenv()
 
-        ZENODO_CLIENT_ID=os.environ['ZENODO_CLIENT_ID']
-        ZENODO_SECRET=os.environ['ZENODO_SECRET']
+        ZENODO_CLIENT_ID = os.environ['ZENODO_CLIENT_ID']
+        ZENODO_SECRET = os.environ['ZENODO_SECRET']
 
         # Temporary hack to accommodate the fact that the gateway is running on a different port than the https proxy
-        current_uri =request.build_absolute_uri()
-        state_uri = current_uri.replace("http://custom-ui-tutorial:8000", "https://localhost:4430")
+        current_uri = request.build_absolute_uri()
+        state_uri = current_uri.replace(
+            "http://custom-ui-tutorial:8000", "https://localhost:4430")
 
         if (request.GET.__contains__('oauth_state')):
             state_uri = request.GET.get('oauth_state')
 
         scope = ['deposit:write', 'deposit:actions']
-        oauth = OAuth2Session(ZENODO_CLIENT_ID, redirect_uri="https://localhost:4430/custom_ui_tutorial_app/home/", scope=scope, state=state_uri) # TODO: Replace with actual URL
+        oauth = OAuth2Session(ZENODO_CLIENT_ID, redirect_uri="https://localhost:4430/custom_ui_tutorial_app/home/",
+                              scope=scope, state=state_uri)  # TODO: Replace with actual URL
 
         if (not request.GET.__contains__('oauth_redirect')):
 
-            authorization_url, state = oauth.authorization_url('https://zenodo.org/oauth/authorize')
+            authorization_url, state = oauth.authorization_url(
+                'https://zenodo.org/oauth/authorize')
 
             return {
                 'url': authorization_url,
@@ -79,8 +83,8 @@ class GaussianEigenvaluesViewProvider:
             ax[1].legend()
         else:
             ax = fig.subplots()
-            ax.text(0.5, 0.5, "No applicable data", horizontalalignment='center',
-                    verticalalignment='center', transform=ax.transAxes)
+            # ax.text(0.5, 0.5, "No applicable data", horizontalalignment='center',
+            #         verticalalignment='center', transform=ax.transAxes)
 
         # Typical thing is to write an image to an in-memory BytesIO object and
         # then return its bytes
@@ -104,14 +108,14 @@ class GaussianEigenvaluesViewProvider:
         print("state recieved: " + parse_qs(oauth_redirect.query)['state'][0])
 
         token = oauth.fetch_token(
-                'https://zenodo.org/oauth/token',
-                authorization_response=request.GET.get('oauth_redirect'),
-                client_secret=ZENODO_SECRET,
-                scope=scope
-                )
+            'https://zenodo.org/oauth/token',
+            authorization_response=request.GET.get('oauth_redirect'),
+            client_secret=ZENODO_SECRET,
+            scope=scope
+        )
 
         res = oauth.get('https://zenodo.org/api/deposit/depositions',
-                           params={'q': upload_name})
+                        params={'q': upload_name})
 
         if len(res.json()):
             depID = res.json()[0]['id']
@@ -130,25 +134,25 @@ class GaussianEigenvaluesViewProvider:
         print("new upload!")
 
         res = oauth.post('https://zenodo.org/api/deposit/depositions',
-                            json={
-                                "metadata": {
-                                    "upload_type": "image",
-                                    "image_type": "figure",
-                                    "title": upload_name,
-                                    "creators": [
-                                        {
-                                            "name": "John Doe"
-                                        }
-                                    ],
-                                    "description": "Automatically uploaded data from the Space Science Virtual Laboratory",
-                                    "access_right": "closed"
-                                }
-                            },
-                            # Headers are not necessary here since "requests" automatically
-                            # adds "Content-Type: application/json", because we're using
-                            # the "json=" keyword argument
-                            # headers=headers,
-                            headers=headers)
+                         json={
+                             "metadata": {
+                                 "upload_type": "image",
+                                 "image_type": "figure",
+                                 "title": upload_name,
+                                 "creators": [
+                                     {
+                                         "name": "John Doe"
+                                     }
+                                 ],
+                                 "description": "Automatically uploaded data from the Space Science Virtual Laboratory",
+                                 "access_right": "closed"
+                             }
+                         },
+                         # Headers are not necessary here since "requests" automatically
+                         # adds "Content-Type: application/json", because we're using
+                         # the "json=" keyword argument
+                         # headers=headers,
+                         headers=headers)
 
         bucket_url = res.json()["links"]["bucket"]
 
