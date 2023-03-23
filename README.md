@@ -1,5 +1,7 @@
 # Custom UI Tutorial App
 
+> This has been replaced by: https://github.com/matthew-mccall/zenodo_integration_app.git
+
 ## Getting Started
 
 1. Follow the instructions for installing the
